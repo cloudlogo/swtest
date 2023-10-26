@@ -1,2 +1,2 @@
 # swtest
-Testing swapi.dev site 
+Doing exercises against https://swapi.dev
