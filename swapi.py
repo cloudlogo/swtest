@@ -18,26 +18,44 @@ def make_api_request(endpoint, params=None):
 def find_ships_in_return_of_the_jedi(film_title):
     film_data = make_api_request("films", params={"search": film_title})
 
-    if film_data and film_data.get("results"):
-        film = film_data["results"][0]
-        starships = make_api_request("starships")
+    if not film_data or not film_data.get("results"):
+        return []
 
-        if starships and starships.get("results"):
-            starships_in_jedi = [ship for ship in starships["results"] if film["url"] in ship["films"]]
-            return starships_in_jedi
-    return []
+    film = film_data["results"][0]
+    starships = make_api_request("starships")
+
+    if starships and starships.get("results"):
+        starships_in_jedi = [ship for ship in starships["results"] if film["url"] in ship["films"]]
+        return starships_in_jedi
 
 
 # Exercise 2: Find all ships that have a hyperdrive rating >= 1.0
 def find_ships_with_hyperdrive_rating(min_hyperdrive_rating):
     starships = make_api_request("starships")
 
-    if starships and starships.get("results"):
-        hyperdrive_ships = [ship for ship in starships["results"] if
-                            float(ship["hyperdrive_rating"]) >= min_hyperdrive_rating]
-        return hyperdrive_ships
-    else:
+    if not starships or not starships.get("results"):
         return []
+    hyperdrive_ships = [ship for ship in starships["results"] if
+                        float(ship["hyperdrive_rating"]) >= min_hyperdrive_rating]
+    return hyperdrive_ships
+
+
+def count_ship_crew_members(starships):
+    for ship in starships["results"]:
+        crew = ship["crew"]
+
+        # Remove commas from the crew value
+        crew = crew.replace(",", "")
+
+        # Check if the crew value is a range (e.g., "30-165")
+        if '-' in crew:
+            min_range, max_range = map(int, crew.split('-'))
+            if min_crew_size <= min_range <= max_crew_size or min_crew_size <= max_range <= max_crew_size:
+                yield ship
+        else:
+            crew_count = int(crew)
+            if min_crew_size <= crew_count <= max_crew_size:
+                yield ship
 
 
 # Exercise 3: Find all ships that have crews between 3 and 100
@@ -45,25 +63,7 @@ def find_ships_with_crew_size(min_crew_size, max_crew_size):
     starships = make_api_request("starships")
 
     if starships and starships.get("results"):
-        crew_ships = []
-
-        for ship in starships["results"]:
-            crew = ship["crew"]
-
-            # Remove commas from the crew value
-            crew = crew.replace(",", "")
-
-            # Check if the crew value is a range (e.g., "30-165")
-            if '-' in crew:
-                min_range, max_range = map(int, crew.split('-'))
-                if min_crew_size <= min_range <= max_crew_size or min_crew_size <= max_range <= max_crew_size:
-                    crew_ships.append(ship)
-            else:
-                crew_count = int(crew)
-                if min_crew_size <= crew_count <= max_crew_size:
-                    crew_ships.append(ship)
-
-        return crew_ships
+        return list(count_ship_crew_members(starships))
     else:
         return []
 
